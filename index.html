@@ -18,13 +18,15 @@
         .stats-number { font-size: 2em; font-weight: bold; color: #1a73e8; margin: 10px 0; }
         .btn { display: block; width: 100%; padding: 14px; margin-bottom: 12px; font-size: 1em; font-weight: bold; color: white; background: #1a73e8; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
         .btn:hover { background: #1557b0; }
+        .btn-audio { background: #28a745; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.05em; }
+        .btn-audio:hover { background: #218838; }
         .btn-danger { background: #dc3545; }
         .btn-danger:hover { background: #b02a37; }
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 0.95em; color: #666; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; color: white; background: #1a73e8; font-weight: bold; }
-        .question-text { font-size: 1.2em; margin-bottom: 25px; line-height: 1.6; font-weight: bold; }
+        .question-text { font-size: 1.2em; margin-bottom: 20px; line-height: 1.6; font-weight: bold; }
         .options { display: flex; flex-direction: column; gap: 10px; }
         .option-btn { padding: 14px; font-size: 1em; text-align: left; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
         .option-btn:hover { background: #e2e6ea; border-color: #dae0e5; }
@@ -33,6 +35,7 @@
         .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .section-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
         .text-content { margin-top: 0; font-size: 0.95em; line-height: 1.6; }
+        .audio-script-box { background: #fff; padding: 10px 15px; border-radius: 6px; border: 1px dashed #28a745; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -47,7 +50,7 @@
     </div>
 
     <div id="dashboard" class="screen">
-        <h1>TOEIC Part 5 学習</h1>
+        <h1>TOEIC 学習アプリ</h1>
         <div class="stats-box">
             <p style="margin: 0; color: #555;">全体の進捗状況</p>
             <div class="stats-number"><span id="stat-completed">0</span> / <span id="stat-total">0</span> 問 完了</div>
@@ -65,6 +68,10 @@
         </div>
 
         <div id="question-area">
+            <!-- 音声読み上げボタン -->
+            <button class="btn btn-audio" id="audio-btn" onclick="playCurrentAudio()" style="display: none;">
+                🔊 英語音声を再生
+            </button>
             <div class="question-text" id="q-text">問題文</div>
             <div class="options" id="options"></div>
         </div>
@@ -72,6 +79,14 @@
         <div id="result-area" class="result-area">
             <h2 id="result-title" style="margin-top:0;"></h2>
             <p style="font-size: 1.1em;"><strong>正解: </strong><span id="correct-ans"></span></p>
+
+            <div id="script-container" style="display: none;">
+                <div class="section-label">🗣️ 読み上げテキスト:</div>
+                <div class="audio-script-box">
+                    <p id="audio-script-text" style="margin: 0; font-weight: bold;"></p>
+                </div>
+            </div>
+
             <div class="section-label">📝 解説:</div>
             <p id="explanation" class="text-content"></p>
             <div class="section-label">🇯🇵 和訳:</div>
@@ -84,9 +99,6 @@
 </div>
 
 <script>
-    // ==========================================
-    // 【設定】スプレッドシートの公開CSVのURL
-    // ==========================================
     let SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?gid=0&single=true&output=csv";
 
     let questions = [];
@@ -108,21 +120,37 @@
         document.getElementById('loading').style.display = 'none';
     }
 
+    // ブラウザ音声読み上げ処理（Web Speech API）
+    function playAudioText(text) {
+        if (!('speechSynthesis' in window)) {
+            alert("お使いのブラウザは音声読み上げに対応していません。");
+            return;
+        }
+        window.speechSynthesis.cancel(); // 前の音声を止める
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US'; // アメリカ英語
+        utterance.rate = 0.9;     // 少し聴き取りやすい速度に調整
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function playCurrentAudio() {
+        const q = targetQuestions[currentIndex];
+        if (q && q.readText) {
+            playAudioText(q.readText);
+        }
+    }
+
     async function loadSpreadsheetData() {
         SPREADSHEET_CSV_URL = SPREADSHEET_CSV_URL.trim();
 
-        // file:// で開いている場合の警告
         if (window.location.protocol === 'file:') {
-            showError("<strong>実行環境のエラー:</strong> 現在パソコン内のファイルを直接開いています（<code>file:///</code>）。ブラウザのセキュリティ制限によりデータ通信がブロックされます。<br><br><strong>対処方法:</strong> GitHub Pages（<code>https://...</code>）上で開いてください。");
+            showError("<strong>実行環境のエラー:</strong> パソコン内のファイルを直接開いています。GitHub Pages（<code>https://...</code>）上で開いてください。");
             return;
         }
 
         try {
             const response = await fetch(SPREADSHEET_CSV_URL);
-            
-            if (!response.ok) {
-                throw new Error("HTTPステータス: " + response.status + " (" + response.statusText + ")");
-            }
+            if (!response.ok) throw new Error("HTTPステータス: " + response.status);
             
             const csvText = await response.text();
 
@@ -133,6 +161,7 @@
                     questions = results.data.map(row => ({
                         id: (row.id || '').trim(),
                         level: (row.level || '1').trim(),
+                        readText: (row.read_text || '').trim(),
                         question: (row.question || '').trim(),
                         options: {
                             A: (row.option_a || '').trim(),
@@ -146,7 +175,7 @@
                     })).filter(q => q.id && q.question && q.correct);
 
                     if (questions.length === 0) {
-                        showError("<strong>データ取得エラー:</strong> CSVファイルは取得できましたが、有効な問題データが0件でした。<br>スプレッドシートの1行目の列名（<code>id</code>, <code>question</code>, <code>option_a</code>, <code>correct_answer</code> など）が正しいか確認してください。");
+                        showError("<strong>データ取得エラー:</strong> 有効な問題データが0件でした。列名を確認してください。");
                         return;
                     }
 
@@ -157,15 +186,12 @@
                 }
             });
         } catch (error) {
-            showError("<strong>通信エラーが発生しました:</strong><br>" + error.message + 
-                      "<br><br><strong>考えられる原因:</strong>" +
-                      "<ul>" +
-                      "<li>スプレッドシートの「ウェブに公開」設定がオフになっている可能性があります。</li>" +
-                      "</ul>");
+            showError("<strong>通信エラーが発生しました:</strong><br>" + error.message);
         }
     }
 
     function showDashboard() {
+        window.speechSynthesis.cancel();
         const total = questions.length;
         let completed = 0;
         let correctCount = 0;
@@ -215,6 +241,7 @@
     }
 
     function loadQuestion() {
+        window.speechSynthesis.cancel();
         const q = targetQuestions[currentIndex];
         document.getElementById('result-area').style.display = 'none';
         document.getElementById('options').style.display = 'flex';
@@ -222,6 +249,16 @@
         document.getElementById('q-level').innerText = "Level " + q.level;
         document.getElementById('progress-text').innerText = (currentIndex + 1) + " / " + targetQuestions.length;
         document.getElementById('q-text').innerText = "Q. " + q.question;
+
+        // 音声テキストが存在する場合のみ再生ボタンを表示
+        const audioBtn = document.getElementById('audio-btn');
+        if (q.readText) {
+            audioBtn.style.display = 'flex';
+            // 自動で音声を1回再生
+            playAudioText(q.readText);
+        } else {
+            audioBtn.style.display = 'none';
+        }
 
         const optionsDiv = document.getElementById('options');
         optionsDiv.innerHTML = '';
@@ -254,6 +291,16 @@
         }
 
         document.getElementById('correct-ans').innerText = q.correct + (q.options[q.correct] ? (". " + q.options[q.correct]) : "");
+
+        // 解答後に読み上げテキスト（台本）を表示
+        const scriptContainer = document.getElementById('script-container');
+        if (q.readText) {
+            document.getElementById('audio-script-text').innerText = q.readText;
+            scriptContainer.style.display = 'block';
+        } else {
+            scriptContainer.style.display = 'none';
+        }
+
         document.getElementById('explanation').innerText = q.explanation || "解説はありません。";
         document.getElementById('translation').innerText = q.translation || "和訳はありません。";
 
