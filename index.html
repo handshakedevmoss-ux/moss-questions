@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>moss-questions-app</title>
+    <title>moss question app</title>
     <!-- CSVパース（解析）用ライブラリ PapaParse -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
@@ -15,7 +15,7 @@
         .screen { display: none; }
         .screen.active { display: block; }
 
-        /* ローディング・アラート */
+        /* ローディング・エラー表示 */
         .loading-box { text-align: center; padding: 40px 20px; font-size: 1.1em; color: #666; }
         .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; font-size: 0.9em; line-height: 1.5; }
 
@@ -24,17 +24,22 @@
         .stats-number { font-size: 2em; font-weight: bold; color: #1a73e8; margin: 10px 0; }
         
         /* ボタン */
-        .btn { display: block; width: 100%; padding: 14px; margin-bottom: 12px; font-size: 1em; font-weight: bold; color: white; background: #1a73e8; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; text-decoration: none; }
+        .btn { display: block; width: 100%; padding: 14px; margin-bottom: 12px; font-size: 1em; font-weight: bold; color: white; background: #1a73e8; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
         .btn:hover { background: #1557b0; }
         .btn-danger { background: #dc3545; }
         .btn-danger:hover { background: #b02a37; }
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
 
+        /* 音声コントロールエリア */
+        .audio-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-audio { flex: 1; padding: 12px; font-size: 0.95em; font-weight: bold; border: 2px solid #1a73e8; background: #e8f0fe; color: #1a73e8; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .btn-audio:hover { background: #1a73e8; color: white; }
+
         /* クイズ画面 */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 0.95em; color: #666; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; color: white; background: #1a73e8; font-weight: bold; }
-        .question-text { font-size: 1.2em; margin-bottom: 25px; line-height: 1.6; font-weight: bold; }
+        .question-text { font-size: 1.2em; margin-bottom: 20px; line-height: 1.6; font-weight: bold; }
         .options { display: flex; flex-direction: column; gap: 10px; }
         .option-btn { padding: 14px; font-size: 1em; text-align: left; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
         .option-btn:hover { background: #e2e6ea; border-color: #dae0e5; }
@@ -45,6 +50,7 @@
         .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .section-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
         .text-content { margin-top: 0; font-size: 0.95em; line-height: 1.6; }
+        .script-box { background: rgba(255,255,255,0.7); padding: 10px 14px; border-radius: 6px; font-size: 0.95em; line-height: 1.5; border-left: 4px solid #1a73e8; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -61,7 +67,7 @@
 
     <!-- ▼ ダッシュボード画面 ▼ -->
     <div id="dashboard" class="screen">
-        <h1>moss-questions-app</h1>
+        <h1>TOEIC 学習アプリ</h1>
         <div class="stats-box">
             <p style="margin: 0; color: #555;">全体の進捗状況</p>
             <div class="stats-number"><span id="stat-completed">0</span> / <span id="stat-total">0</span> 問 完了</div>
@@ -79,18 +85,26 @@
             <span id="progress-text">1 / 10</span>
         </div>
 
+        <!-- 音声再生エリア（read_textがある問題のみ表示） -->
+        <div id="audio-controls" class="audio-area" style="display: none;">
+            <button class="btn-audio" onclick="playCurrentAudio(1.0)">🔊 音声を再生</button>
+            <button class="btn-audio" onclick="playCurrentAudio(0.8)" style="border-color: #6c757d; color: #495057; background: #f8f9fa;">🐢 ゆっくり再生</button>
+        </div>
+
         <div id="question-area">
             <div class="question-text" id="q-text">問題文</div>
-            <!-- ▼ ここに音声ボタンを追加 ▼ -->
-<button class="btn btn-secondary" onclick="playCurrentQuestion()" style="margin-bottom: 20px; font-size: 0.9em; padding: 8px;">
-    > 音声を聴く
-</button>
             <div class="options" id="options"></div>
         </div>
 
         <div id="result-area" class="result-area">
             <h2 id="result-title" style="margin-top:0;"></h2>
             <p style="font-size: 1.1em;"><strong>正解: </strong><span id="correct-ans"></span></p>
+
+            <div id="script-section" style="display: none;">
+                <div class="section-label">🎧 放送音声テキスト:</div>
+                <div class="script-box" id="script-text"></div>
+            </div>
+
             <div class="section-label">📝 解説:</div>
             <p id="explanation" class="text-content"></p>
             <div class="section-label">🇯🇵 和訳:</div>
@@ -98,7 +112,7 @@
             <button class="btn" id="next-btn" onclick="nextQuestion()" style="margin-top: 20px;">次の問題へ</button>
         </div>
         
-        <button class="btn btn-secondary" onclick="showDashboard()" style="margin-top: 25px; background: #6c757d; font-size: 0.9em; padding: 10px;">ダッシュボードに戻る</button>
+        <button class="btn btn-secondary" onclick="stopAudio(); showDashboard();" style="margin-top: 25px; background: #6c757d; font-size: 0.9em; padding: 10px;">ダッシュボードに戻る</button>
     </div>
 </div>
 
@@ -106,14 +120,38 @@
     // ==========================================
     // 【設定】公開したスプレッドシートのCSV URLを入力
     // ==========================================
-    const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?gid=0&single=true&output=csv";
+    const SPREADSHEET_CSV_URL = "ここにスプレッドシートの公開CSVのURLを貼り付けてください";
 
-    // アプリ内変数
     let questions = [];
     let progress = JSON.parse(localStorage.getItem('toeic_app_progress')) || {};
     let currentMode = 'normal';
     let targetQuestions = [];
     let currentIndex = 0;
+
+    // 音声読み上げ関数
+    function playCurrentAudio(rate = 1.0) {
+        if (!('speechSynthesis' in window)) {
+            alert("お使いの端末・ブラウザは音声読み上げ機能に対応していません。");
+            return;
+        }
+
+        const q = targetQuestions[currentIndex];
+        if (!q || !q.read_text) return;
+
+        window.speechSynthesis.cancel(); // 既存の音声を一度停止
+
+        const utterance = new SpeechSynthesisUtterance(q.read_text);
+        utterance.lang = 'en-US';
+        utterance.rate = rate; // 再生速度
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // 音声を強制停止
+    function stopAudio() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+    }
 
     // 画面切り替え制御
     function showScreen(screenId) {
@@ -131,7 +169,7 @@
 
     // スプレッドシートからCSVを取得・解析
     async function loadSpreadsheetData() {
-        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("ここにスプレッドシート")) {
+        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?output=csv")) {
             showError("<strong>設定が必要です:</strong> コード内の <code>SPREADSHEET_CSV_URL</code> にGoogleスプレッドシートの「ウェブに公開」から取得したCSV URLを設定してください。");
             showScreen('loading');
             return;
@@ -150,6 +188,7 @@
                     questions = results.data.map(row => ({
                         id: (row.id || '').trim(),
                         level: (row.level || '1').trim(),
+                        read_text: (row.read_text || '').trim(),
                         question: (row.question || '').trim(),
                         options: {
                             A: (row.option_a || '').trim(),
@@ -231,13 +270,23 @@
 
     // 出題表示
     function loadQuestion() {
+        stopAudio();
         const q = targetQuestions[currentIndex];
+        
         document.getElementById('result-area').style.display = 'none';
         document.getElementById('options').style.display = 'flex';
         
         document.getElementById('q-level').innerText = "Level " + q.level;
         document.getElementById('progress-text').innerText = (currentIndex + 1) + " / " + targetQuestions.length;
         document.getElementById('q-text').innerText = "Q. " + q.question;
+
+        // read_text の有無で音声ボタンの表示・非表示を切り替え
+        const audioControls = document.getElementById('audio-controls');
+        if (q.read_text) {
+            audioControls.style.display = 'flex';
+        } else {
+            audioControls.style.display = 'none';
+        }
 
         const optionsDiv = document.getElementById('options');
         optionsDiv.innerHTML = '';
@@ -253,6 +302,7 @@
 
     // 解答判定・保存
     function checkAnswer(selectedKey) {
+        stopAudio();
         const q = targetQuestions[currentIndex];
         const resultArea = document.getElementById('result-area');
         const resultTitle = document.getElementById('result-title');
@@ -271,6 +321,16 @@
         }
 
         document.getElementById('correct-ans').innerText = q.correct + (q.options[q.correct] ? (". " + q.options[q.correct]) : "");
+        
+        // 音声テキスト（スクリプト）の表示切り替え
+        const scriptSection = document.getElementById('script-section');
+        if (q.read_text) {
+            document.getElementById('script-text').innerText = q.read_text;
+            scriptSection.style.display = 'block';
+        } else {
+            scriptSection.style.display = 'none';
+        }
+
         document.getElementById('explanation').innerText = q.explanation || "解説はありません。";
         document.getElementById('translation').innerText = q.translation || "和訳はありません。";
 
@@ -280,6 +340,7 @@
 
     // 次へ
     function nextQuestion() {
+        stopAudio();
         currentIndex++;
         if (currentIndex < targetQuestions.length) {
             loadQuestion();
@@ -301,32 +362,6 @@
 
     // 起動時処理
     window.onload = loadSpreadsheetData;
-
-    // 英語音声を読み上げる関数
-function playAudio(text) {
-    if (!('speechSynthesis' in window)) {
-        alert("お使いのブラウザは音声読み上げに対応していません。");
-        return;
-    }
-    // 再生中の音声を停止
-    window.speechSynthesis.cancel();
-
-    // 穴埋めのハイフン（-----）を「blank」と読み替える
-    const readText = text.replace(/-+/g, "blank");
-
-    const utterance = new SpeechSynthesisUtterance(readText);
-    utterance.lang = 'en-US'; // アメリカ英語
-    utterance.rate = 0.9;     // 読み上げ速度（少しゆっくりで聞き取りやすく設定）
-
-    window.speechSynthesis.speak(utterance);
-
-    function playCurrentQuestion() {
-    const q = targetQuestions[currentIndex];
-    if (q) {
-        playAudio(q.question);
-    }
-}
-}
 </script>
 </body>
 </html>
