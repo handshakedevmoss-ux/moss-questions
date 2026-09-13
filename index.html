@@ -5,35 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>moss questions app</title>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    h1, h2 { text-align: center; color: #2b2b2b; margin-top: 0; }
-    .screen { display: none; }
-    .screen.active { display: block; }
-    .loading-box { text-align: center; padding: 40px 20px; font-size: 1.1em; color: #666; }
-    .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; font-size: 0.9em; line-height: 1.6; }
-    .stats-box { background: #f1f3f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-    .stats-number { font-size: 2em; font-weight: bold; color: #212529; margin: 10px 0; }
-    .btn { display: block; width: 100%; padding: 14px; margin-bottom: 12px; font-size: 1em; font-weight: bold; color: white; background: #28a745; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
-    .btn:hover { background: #218838; }
-    .btn-danger { background: #dc3545; }
-    .btn-danger:hover { background: #b02a37; }
-    .btn-secondary { background: #6c757d; }
-    .btn-secondary:hover { background: #5a6268; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 0.95em; color: #666; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; color: white; background: #6c757d; font-weight: bold; }
-    .question-text { font-size: 1.2em; margin-bottom: 20px; line-height: 1.6; font-weight: bold; }
-    .options { display: flex; flex-direction: column; gap: 10px; }
-    .option-btn { padding: 14px; font-size: 1em; text-align: left; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
-    .option-btn:hover { background: #e2e6ea; border-color: #dae0e5; }
-    .result-area { margin-top: 25px; padding: 20px; border-radius: 8px; display: none; }
-    .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .section-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
-    .text-content { margin-top: 0; font-size: 0.95em; line-height: 1.6; }
-</style>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1, h2 { text-align: center; color: #2b2b2b; margin-top: 0; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .loading-box { text-align: center; padding: 40px 20px; font-size: 1.1em; color: #666; }
+        .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; font-size: 0.9em; line-height: 1.6; }
+        
+        /* 進捗ボックス */
+        .stats-box { background: #f1f3f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .stats-number { font-size: 2em; font-weight: bold; color: #212529; margin: 8px 0; }
+        .stats-detail { font-size: 0.9em; color: #666; margin: 4px 0; }
+
+        /* スプリント履歴テーブル */
+        .history-box { margin-top: 25px; border-top: 1px solid #e9ecef; padding-top: 15px; }
+        .history-title { font-weight: bold; color: #495057; font-size: 0.95em; margin-bottom: 8px; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .history-table th, .history-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        .history-table th { background: #f8f9fa; color: #666; }
+
+        /* ボタン */
+        .btn { display: block; width: 100%; padding: 14px; margin-bottom: 12px; font-size: 1em; font-weight: bold; color: white; background: #28a745; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
+        .btn:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #b02a37; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        
+        /* クイズエリア */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 0.95em; color: #666; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; color: white; background: #6c757d; font-weight: bold; }
+        .question-text { font-size: 1.2em; margin-bottom: 20px; line-height: 1.6; font-weight: bold; }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .option-btn { padding: 14px; font-size: 1em; text-align: left; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
+        .option-btn:hover { background: #e2e6ea; border-color: #dae0e5; }
+        .result-area { margin-top: 25px; padding: 20px; border-radius: 8px; display: none; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .section-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
+        .text-content { margin-top: 0; font-size: 0.95em; line-height: 1.6; }
+    </style>
 </head>
 <body>
 
@@ -46,22 +60,48 @@
         </div>
     </div>
 
+    <!-- ▼ ダッシュボード画面 ▼ -->
     <div id="dashboard" class="screen">
-        <h1>moss questions app</h1>
+        <h1>TOEIC Part 5 学習</h1>
+        
         <div class="stats-box">
-            <p style="margin: 0; color: #555;">全体の進捗状況</p>
-            <div class="stats-number"><span id="stat-completed">0</span> / <span id="stat-total">0</span> 問 完了</div>
-            <p style="margin: 0; color: #555;">正解: <span id="stat-correct">0</span> 問 / 要復習: <span id="stat-incorrect">0</span> 問</p>
+            <p style="margin: 0; color: #555;">習得状況（2回正解で達成）</p>
+            <div class="stats-number"><span id="stat-mastered">0</span> / <span id="stat-total">0</span> 問 達成</div>
+            <div class="stats-detail">出題可能な残り問題: <strong id="stat-remaining">0</strong> 問</div>
         </div>
-        <button class="btn" onclick="startQuiz('normal')">学習を始める / 続きから</button>
-        <button class="btn btn-secondary" id="btn-review" onclick="startQuiz('review')" style="display: none;">間違えた問題を復習する</button>
-        <button class="btn btn-danger" onclick="resetProgress()" style="margin-top: 30px; font-size: 0.85em; padding: 10px;">進捗データを初期化</button>
+
+        <div class="stats-box" style="margin-top: -10px;">
+            <p style="margin: 0; color: #555;">直近スプリントの正解率</p>
+            <div class="stats-number" id="latest-rate">-- %</div>
+            <div class="stats-detail" id="latest-score">まだ実施記録がありません</div>
+        </div>
+
+        <button class="btn" onclick="startSprint()">今日の10問スプリントを開始</button>
+        <button class="btn btn-danger" onclick="resetProgress()" style="margin-top: 20px; font-size: 0.85em; padding: 10px;">進捗・履歴データを初期化</button>
+
+        <!-- スプリント履歴 -->
+        <div class="history-box" id="history-box">
+            <div class="history-title">📊 スプリント実施履歴 (直近5回)</div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>結果</th>
+                        <th>正解率</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                    <!-- 履歴データが入ります -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- ▼ クイズ画面 ▼ -->
     <div id="quiz-area" class="screen">
         <div class="header">
             <span class="badge" id="q-level">Level 1</span>
-            <span id="progress-text">1 / 10</span>
+            <span id="progress-text">Sprint: 1 / 10</span>
         </div>
 
         <div id="question-area">
@@ -89,9 +129,11 @@
 
     let questions = [];
     let progress = JSON.parse(localStorage.getItem('toeic_app_progress')) || {};
-    let currentMode = 'normal';
+    let sprintHistory = JSON.parse(localStorage.getItem('toeic_app_sprints')) || [];
+    
     let targetQuestions = [];
     let currentIndex = 0;
+    let sprintCorrectCount = 0;
 
     function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -104,6 +146,25 @@
         errorBox.innerHTML = htmlMsg;
         errorBox.style.display = 'block';
         document.getElementById('loading').style.display = 'none';
+    }
+
+    // 問題ごとの正解回数を取得（過去データ互換対応）
+    function getCorrectCount(qId) {
+        const p = progress[qId];
+        if (!p) return 0;
+        if (typeof p === 'number') return p;
+        if (typeof p === 'string') return p === 'correct' ? 1 : 0;
+        return p.correct || 0;
+    }
+
+    // 配列のシャッフル関数（Fisher-Yates）
+    function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
     }
 
     async function loadSpreadsheetData() {
@@ -157,48 +218,61 @@
 
     function showDashboard() {
         const total = questions.length;
-        let completed = 0;
-        let correctCount = 0;
-        let incorrectCount = 0;
-
-        questions.forEach(q => {
-            if (progress[q.id] === 'correct') {
-                completed++;
-                correctCount++;
-            } else if (progress[q.id] === 'incorrect') {
-                completed++;
-                incorrectCount++;
-            }
-        });
+        // 2回以上正解している問題数
+        const masteredCount = questions.filter(q => getCorrectCount(q.id) >= 2).length;
+        // 出題対象（2回未満）の問題数
+        const remainingCount = total - masteredCount;
 
         document.getElementById('stat-total').innerText = total;
-        document.getElementById('stat-completed').innerText = completed;
-        document.getElementById('stat-correct').innerText = correctCount;
-        document.getElementById('stat-incorrect').innerText = incorrectCount;
+        document.getElementById('stat-mastered').innerText = masteredCount;
+        document.getElementById('stat-remaining').innerText = remainingCount;
 
-        document.getElementById('btn-review').style.display = (incorrectCount > 0) ? 'block' : 'none';
+        // 直近スプリント結果の表示
+        if (sprintHistory.length > 0) {
+            const latest = sprintHistory[0];
+            document.getElementById('latest-rate').innerText = latest.rate + " %";
+            document.getElementById('latest-score').innerText = `${latest.date} 実施 (${latest.correct} / ${latest.total} 問正解)`;
+        } else {
+            document.getElementById('latest-rate').innerText = "-- %";
+            document.getElementById('latest-score').innerText = "まだ実施記録がありません";
+        }
+
+        // 履歴テーブルの更新（直近5回）
+        const tbody = document.getElementById('history-tbody');
+        tbody.innerHTML = '';
+        if (sprintHistory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="color:#888;">履歴はありません</td></tr>';
+        } else {
+            sprintHistory.slice(0, 5).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.date}</td>
+                    <td>${item.correct} / ${item.total}</td>
+                    <td><strong>${item.rate}%</strong></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         showScreen('dashboard');
     }
 
-    function startQuiz(mode) {
-        currentMode = mode;
-        if (mode === 'normal') {
-            targetQuestions = questions;
-            let firstUnanswered = targetQuestions.findIndex(q => !progress[q.id]);
-            currentIndex = (firstUnanswered !== -1) ? firstUnanswered : 0;
-            
-            if (firstUnanswered === -1 && targetQuestions.length > 0) {
-                alert("すべての問題を解答済みです。全問題を最初からやり直します。");
-            }
-        } else if (mode === 'review') {
-            targetQuestions = questions.filter(q => progress[q.id] === 'incorrect');
-            currentIndex = 0;
-        }
+    // 10問スプリント開始処理
+    function startSprint() {
+        // 2回以上正解していない問題のみを抽出
+        const eligibleQuestions = questions.filter(q => getCorrectCount(q.id) < 2);
 
-        if (targetQuestions.length === 0) {
-            alert("対象の問題がありません。");
+        if (eligibleQuestions.length === 0) {
+            alert("すべての問題を2回以上正解しました！おめでとうございます。\n再度学習したい場合は「進捗・履歴データを初期化」してください。");
             return;
         }
+
+        // ランダムにシャッフルし、最大10問を抽出
+        const shuffled = shuffleArray(eligibleQuestions);
+        targetQuestions = shuffled.slice(0, 10);
+        
+        currentIndex = 0;
+        sprintCorrectCount = 0;
 
         showScreen('quiz-area');
         loadQuestion();
@@ -210,7 +284,7 @@
         document.getElementById('options').style.display = 'flex';
         
         document.getElementById('q-level').innerText = "Level " + q.level;
-        document.getElementById('progress-text').innerText = (currentIndex + 1) + " / " + targetQuestions.length;
+        document.getElementById('progress-text').innerText = `Sprint: ${currentIndex + 1} / ${targetQuestions.length}`;
         document.getElementById('q-text').innerText = "Q. " + q.question;
 
         const optionsDiv = document.getElementById('options');
@@ -236,6 +310,7 @@
         const isCorrect = (selectedKey === q.correct);
 
         if (isCorrect) {
+            sprintCorrectCount++;
             resultArea.className = 'result-area correct';
             resultTitle.innerText = '⭕ 正解！';
         } else {
@@ -247,7 +322,18 @@
         document.getElementById('explanation').innerText = q.explanation || "解説はありません。";
         document.getElementById('translation').innerText = q.translation || "和訳はありません。";
 
-        progress[q.id] = isCorrect ? 'correct' : 'incorrect';
+        // 問題の正解回数を記録（2回以上で除外される基準値）
+        let p = progress[q.id];
+        let correctNum = getCorrectCount(q.id);
+        let incorrectNum = (p && typeof p === 'object' && p.incorrect) ? p.incorrect : 0;
+
+        if (isCorrect) {
+            correctNum++;
+        } else {
+            incorrectNum++;
+        }
+
+        progress[q.id] = { correct: correctNum, incorrect: incorrectNum };
         localStorage.setItem('toeic_app_progress', JSON.stringify(progress));
     }
 
@@ -256,17 +342,35 @@
         if (currentIndex < targetQuestions.length) {
             loadQuestion();
         } else {
-            alert("このセッションの問題がすべて終了しました。");
+            // スプリント完了処理
+            const total = targetQuestions.length;
+            const rate = Math.round((sprintCorrectCount / total) * 100);
+            
+            const now = new Date();
+            const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            // 履歴に保存（最新順）
+            sprintHistory.unshift({
+                date: dateStr,
+                correct: sprintCorrectCount,
+                total: total,
+                rate: rate
+            });
+            localStorage.setItem('toeic_app_sprints', JSON.stringify(sprintHistory));
+
+            alert(`🎉 今日のスプリントが完了しました！\n\n正解数: ${sprintCorrectCount} / ${total} 問\n正解率: ${rate}%`);
             showDashboard();
         }
     }
 
     function resetProgress() {
-        if (confirm("これまでの解答履歴をすべて消去しますか？\n（この操作は取り消せません）")) {
+        if (confirm("これまでの解答履歴およびスプリント履歴をすべて初期化しますか？\n（この操作は取り消せません）")) {
             progress = {};
+            sprintHistory = [];
             localStorage.removeItem('toeic_app_progress');
+            localStorage.removeItem('toeic_app_sprints');
             showDashboard();
-            alert("進捗を初期化しました。");
+            alert("すべてのデータを初期化しました。");
         }
     }
 
