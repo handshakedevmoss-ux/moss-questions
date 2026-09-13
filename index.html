@@ -122,22 +122,45 @@
 
     // ブラウザ音声読み上げ処理（Web Speech API）
     function playAudioText(text) {
+       // 利用可能な高音質ボイスを探して保持する変数
+    let preferredVoice = null;
+
+    function initVoices() {
+        if (!('speechSynthesis' in window)) return;
+        const voices = window.speechSynthesis.getVoices();
+        
+        // 聞き取りやすさに定評のある高品位ボイスを優先順位をつけて探す
+        // (Googleの音声, AppleのSamantha/Siri, MicrosoftのNatural音声など)
+        preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Premium'))) 
+                      || voices.find(v => v.lang === 'en-US') 
+                      || voices.find(v => v.lang.startsWith('en'));
+    }
+
+    // ブラウザのボイスリスト読み込み完了時に実行
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = initVoices;
+        initVoices();
+    }
+
+    // ブラウザ音声読み上げ処理
+    function playAudioText(text) {
         if (!('speechSynthesis' in window)) {
             alert("お使いのブラウザは音声読み上げに対応していません。");
             return;
         }
-        window.speechSynthesis.cancel(); // 前の音声を止める
+        window.speechSynthesis.cancel(); // 再生中の音声を停止
+
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US'; // アメリカ英語
-        utterance.rate = 0.9;     // 少し聴き取りやすい速度に調整
+        
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
+        }
+        utterance.lang = 'en-US';
+        utterance.rate = 0.88; // リスニング学習用に少しだけ落ち着いた速度（0.88倍）
+        utterance.pitch = 1.0; // 声の高さ（標準）
+
         window.speechSynthesis.speak(utterance);
     }
-
-    function playCurrentAudio() {
-        const q = targetQuestions[currentIndex];
-        if (q && q.readText) {
-            playAudioText(q.readText);
-        }
     }
 
     async function loadSpreadsheetData() {
