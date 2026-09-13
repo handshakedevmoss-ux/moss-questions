@@ -67,7 +67,7 @@
 
     <!-- ▼ ダッシュボード画面 ▼ -->
     <div id="dashboard" class="screen">
-        <h1>TOEIC 学習アプリ</h1>
+        <h1>moss question app</h1>
         <div class="stats-box">
             <p style="margin: 0; color: #555;">全体の進捗状況</p>
             <div class="stats-number"><span id="stat-completed">0</span> / <span id="stat-total">0</span> 問 完了</div>
@@ -169,7 +169,7 @@
 
     // スプレッドシートからCSVを取得・解析
     async function loadSpreadsheetData() {
-        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?gid=0&single=true&output=csv")) {
+        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?output=csv")) {
             showError("<strong>設定が必要です:</strong> コード内の <code>SPREADSHEET_CSV_URL</code> にGoogleスプレッドシートの「ウェブに公開」から取得したCSV URLを設定してください。");
             showScreen('loading');
             return;
