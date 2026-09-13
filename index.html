@@ -81,6 +81,10 @@
 
         <div id="question-area">
             <div class="question-text" id="q-text">問題文</div>
+            <!-- ▼ ここに音声ボタンを追加 ▼ -->
+<button class="btn btn-secondary" onclick="playCurrentQuestion()" style="margin-bottom: 20px; font-size: 0.9em; padding: 8px;">
+    > 音声を聴く
+</button>
             <div class="options" id="options"></div>
         </div>
 
@@ -297,6 +301,32 @@
 
     // 起動時処理
     window.onload = loadSpreadsheetData;
+
+    // 英語音声を読み上げる関数
+function playAudio(text) {
+    if (!('speechSynthesis' in window)) {
+        alert("お使いのブラウザは音声読み上げに対応していません。");
+        return;
+    }
+    // 再生中の音声を停止
+    window.speechSynthesis.cancel();
+
+    // 穴埋めのハイフン（-----）を「blank」と読み替える
+    const readText = text.replace(/-+/g, "blank");
+
+    const utterance = new SpeechSynthesisUtterance(readText);
+    utterance.lang = 'en-US'; // アメリカ英語
+    utterance.rate = 0.9;     // 読み上げ速度（少しゆっくりで聞き取りやすく設定）
+
+    window.speechSynthesis.speak(utterance);
+
+    function playCurrentQuestion() {
+    const q = targetQuestions[currentIndex];
+    if (q) {
+        playAudio(q.question);
+    }
+}
+}
 </script>
 </body>
 </html>
