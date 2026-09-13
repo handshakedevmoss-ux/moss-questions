@@ -169,7 +169,7 @@
 
     // スプレッドシートからCSVを取得・解析
     async function loadSpreadsheetData() {
-        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?output=csv")) {
+        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?gid=0&single=true&output=csv")) {
             showError("<strong>設定が必要です:</strong> コード内の <code>SPREADSHEET_CSV_URL</code> にGoogleスプレッドシートの「ウェブに公開」から取得したCSV URLを設定してください。");
             showScreen('loading');
             return;
