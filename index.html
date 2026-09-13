@@ -3,54 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>moss question app</title>
-    <!-- CSVパース（解析）用ライブラリ PapaParse -->
+    <title>moss questions app</title>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         h1, h2 { text-align: center; color: #1a73e8; margin-top: 0; }
-        
         .screen { display: none; }
         .screen.active { display: block; }
-
-        /* ローディング・エラー表示 */
         .loading-box { text-align: center; padding: 40px 20px; font-size: 1.1em; color: #666; }
-        .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; font-size: 0.9em; line-height: 1.5; }
-
-        /* ダッシュボード */
+        .error-box { background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; border: 1px solid #f5c6cb; font-size: 0.9em; line-height: 1.6; }
         .stats-box { background: #e8f0fe; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .stats-number { font-size: 2em; font-weight: bold; color: #1a73e8; margin: 10px 0; }
-        
-        /* ボタン */
         .btn { display: block; width: 100%; padding: 14px; margin-bottom: 12px; font-size: 1em; font-weight: bold; color: white; background: #1a73e8; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
         .btn:hover { background: #1557b0; }
         .btn-danger { background: #dc3545; }
         .btn-danger:hover { background: #b02a37; }
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
-
-        /* 音声コントロールエリア */
-        .audio-area { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-audio { flex: 1; padding: 12px; font-size: 0.95em; font-weight: bold; border: 2px solid #1a73e8; background: #e8f0fe; color: #1a73e8; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .btn-audio:hover { background: #1a73e8; color: white; }
-
-        /* クイズ画面 */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 0.95em; color: #666; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85em; color: white; background: #1a73e8; font-weight: bold; }
-        .question-text { font-size: 1.2em; margin-bottom: 20px; line-height: 1.6; font-weight: bold; }
+        .question-text { font-size: 1.2em; margin-bottom: 25px; line-height: 1.6; font-weight: bold; }
         .options { display: flex; flex-direction: column; gap: 10px; }
         .option-btn { padding: 14px; font-size: 1em; text-align: left; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
         .option-btn:hover { background: #e2e6ea; border-color: #dae0e5; }
-        
-        /* 結果・解説 */
         .result-area { margin-top: 25px; padding: 20px; border-radius: 8px; display: none; }
         .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .section-label { font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.9em; }
         .text-content { margin-top: 0; font-size: 0.95em; line-height: 1.6; }
-        .script-box { background: rgba(255,255,255,0.7); padding: 10px 14px; border-radius: 6px; font-size: 0.95em; line-height: 1.5; border-left: 4px solid #1a73e8; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -58,16 +40,14 @@
 <div class="container">
     <div id="error-message" class="error-box"></div>
 
-    <!-- ▼ ローディング画面 ▼ -->
     <div id="loading" class="screen active">
         <div class="loading-box">
             <p>スプレッドシートから問題を読み込んでいます...</p>
         </div>
     </div>
 
-    <!-- ▼ ダッシュボード画面 ▼ -->
     <div id="dashboard" class="screen">
-        <h1>moss question app</h1>
+        <h1>TOEIC Part 5 学習</h1>
         <div class="stats-box">
             <p style="margin: 0; color: #555;">全体の進捗状況</p>
             <div class="stats-number"><span id="stat-completed">0</span> / <span id="stat-total">0</span> 問 完了</div>
@@ -78,17 +58,10 @@
         <button class="btn btn-danger" onclick="resetProgress()" style="margin-top: 30px; font-size: 0.85em; padding: 10px;">進捗データを初期化</button>
     </div>
 
-    <!-- ▼ クイズ画面 ▼ -->
     <div id="quiz-area" class="screen">
         <div class="header">
             <span class="badge" id="q-level">Level 1</span>
             <span id="progress-text">1 / 10</span>
-        </div>
-
-        <!-- 音声再生エリア（read_textがある問題のみ表示） -->
-        <div id="audio-controls" class="audio-area" style="display: none;">
-            <button class="btn-audio" onclick="playCurrentAudio(1.0)">🔊 音声を再生</button>
-            <button class="btn-audio" onclick="playCurrentAudio(0.8)" style="border-color: #6c757d; color: #495057; background: #f8f9fa;">🐢 ゆっくり再生</button>
         </div>
 
         <div id="question-area">
@@ -99,12 +72,6 @@
         <div id="result-area" class="result-area">
             <h2 id="result-title" style="margin-top:0;"></h2>
             <p style="font-size: 1.1em;"><strong>正解: </strong><span id="correct-ans"></span></p>
-
-            <div id="script-section" style="display: none;">
-                <div class="section-label">🎧 放送音声テキスト:</div>
-                <div class="script-box" id="script-text"></div>
-            </div>
-
             <div class="section-label">📝 解説:</div>
             <p id="explanation" class="text-content"></p>
             <div class="section-label">🇯🇵 和訳:</div>
@@ -112,15 +79,15 @@
             <button class="btn" id="next-btn" onclick="nextQuestion()" style="margin-top: 20px;">次の問題へ</button>
         </div>
         
-        <button class="btn btn-secondary" onclick="stopAudio(); showDashboard();" style="margin-top: 25px; background: #6c757d; font-size: 0.9em; padding: 10px;">ダッシュボードに戻る</button>
+        <button class="btn btn-secondary" onclick="showDashboard()" style="margin-top: 25px; background: #6c757d; font-size: 0.9em; padding: 10px;">ダッシュボードに戻る</button>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // 【設定】公開したスプレッドシートのCSV URLを入力
+    // 【設定】スプレッドシートの公開CSVのURL
     // ==========================================
-    const SPREADSHEET_CSV_URL = "ここにスプレッドシートの公開CSVのURLを貼り付けてください";
+    let SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?gid=0&single=true&output=csv";
 
     let questions = [];
     let progress = JSON.parse(localStorage.getItem('toeic_app_progress')) || {};
@@ -128,56 +95,34 @@
     let targetQuestions = [];
     let currentIndex = 0;
 
-    // 音声読み上げ関数
-    function playCurrentAudio(rate = 1.0) {
-        if (!('speechSynthesis' in window)) {
-            alert("お使いの端末・ブラウザは音声読み上げ機能に対応していません。");
-            return;
-        }
-
-        const q = targetQuestions[currentIndex];
-        if (!q || !q.read_text) return;
-
-        window.speechSynthesis.cancel(); // 既存の音声を一度停止
-
-        const utterance = new SpeechSynthesisUtterance(q.read_text);
-        utterance.lang = 'en-US';
-        utterance.rate = rate; // 再生速度
-        window.speechSynthesis.speak(utterance);
-    }
-
-    // 音声を強制停止
-    function stopAudio() {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-    }
-
-    // 画面切り替え制御
     function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         const target = document.getElementById(screenId);
         if (target) target.classList.add('active');
     }
 
-    // エラー表示
-    function showError(msg) {
+    function showError(htmlMsg) {
         const errorBox = document.getElementById('error-message');
-        errorBox.innerHTML = msg;
+        errorBox.innerHTML = htmlMsg;
         errorBox.style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
     }
 
-    // スプレッドシートからCSVを取得・解析
     async function loadSpreadsheetData() {
-        if (!SPREADSHEET_CSV_URL || SPREADSHEET_CSV_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQAqcNxRX1Xr8kfC6tRok6tIKresHTkkmu-F2eA4cMOtVRw3-rqCRC-vvWUlNFjchTpQcITj_VxLwJQ/pub?gid=0&single=true&output=csv")) {
-            showError("<strong>設定が必要です:</strong> コード内の <code>SPREADSHEET_CSV_URL</code> にGoogleスプレッドシートの「ウェブに公開」から取得したCSV URLを設定してください。");
-            showScreen('loading');
+        SPREADSHEET_CSV_URL = SPREADSHEET_CSV_URL.trim();
+
+        // file:// で開いている場合の警告
+        if (window.location.protocol === 'file:') {
+            showError("<strong>実行環境のエラー:</strong> 現在パソコン内のファイルを直接開いています（<code>file:///</code>）。ブラウザのセキュリティ制限によりデータ通信がブロックされます。<br><br><strong>対処方法:</strong> GitHub Pages（<code>https://...</code>）上で開いてください。");
             return;
         }
 
         try {
             const response = await fetch(SPREADSHEET_CSV_URL);
-            if (!response.ok) throw new Error("HTTP Status: " + response.status);
+            
+            if (!response.ok) {
+                throw new Error("HTTPステータス: " + response.status + " (" + response.statusText + ")");
+            }
             
             const csvText = await response.text();
 
@@ -188,7 +133,6 @@
                     questions = results.data.map(row => ({
                         id: (row.id || '').trim(),
                         level: (row.level || '1').trim(),
-                        read_text: (row.read_text || '').trim(),
                         question: (row.question || '').trim(),
                         options: {
                             A: (row.option_a || '').trim(),
@@ -202,22 +146,25 @@
                     })).filter(q => q.id && q.question && q.correct);
 
                     if (questions.length === 0) {
-                        showError("問題データが見つかりませんでした。列名（id, question, option_a 等）を確認してください。");
+                        showError("<strong>データ取得エラー:</strong> CSVファイルは取得できましたが、有効な問題データが0件でした。<br>スプレッドシートの1行目の列名（<code>id</code>, <code>question</code>, <code>option_a</code>, <code>correct_answer</code> など）が正しいか確認してください。");
                         return;
                     }
 
                     showDashboard();
                 },
                 error: function(err) {
-                    showError("CSVデータの解析に失敗しました: " + err.message);
+                    showError("CSV解析エラー: " + err.message);
                 }
             });
         } catch (error) {
-            showError("スプレッドシートの取得に失敗しました。<br>URLが正しいか、シートが「ウェブに公開（CSV形式）」されているか確認してください。<br><small>" + error.message + "</small>");
+            showError("<strong>通信エラーが発生しました:</strong><br>" + error.message + 
+                      "<br><br><strong>考えられる原因:</strong>" +
+                      "<ul>" +
+                      "<li>スプレッドシートの「ウェブに公開」設定がオフになっている可能性があります。</li>" +
+                      "</ul>");
         }
     }
 
-    // ダッシュボード更新
     function showDashboard() {
         const total = questions.length;
         let completed = 0;
@@ -243,7 +190,6 @@
         showScreen('dashboard');
     }
 
-    // クイズ開始
     function startQuiz(mode) {
         currentMode = mode;
         if (mode === 'normal') {
@@ -268,25 +214,14 @@
         loadQuestion();
     }
 
-    // 出題表示
     function loadQuestion() {
-        stopAudio();
         const q = targetQuestions[currentIndex];
-        
         document.getElementById('result-area').style.display = 'none';
         document.getElementById('options').style.display = 'flex';
         
         document.getElementById('q-level').innerText = "Level " + q.level;
         document.getElementById('progress-text').innerText = (currentIndex + 1) + " / " + targetQuestions.length;
         document.getElementById('q-text').innerText = "Q. " + q.question;
-
-        // read_text の有無で音声ボタンの表示・非表示を切り替え
-        const audioControls = document.getElementById('audio-controls');
-        if (q.read_text) {
-            audioControls.style.display = 'flex';
-        } else {
-            audioControls.style.display = 'none';
-        }
 
         const optionsDiv = document.getElementById('options');
         optionsDiv.innerHTML = '';
@@ -300,9 +235,7 @@
         }
     }
 
-    // 解答判定・保存
     function checkAnswer(selectedKey) {
-        stopAudio();
         const q = targetQuestions[currentIndex];
         const resultArea = document.getElementById('result-area');
         const resultTitle = document.getElementById('result-title');
@@ -321,16 +254,6 @@
         }
 
         document.getElementById('correct-ans').innerText = q.correct + (q.options[q.correct] ? (". " + q.options[q.correct]) : "");
-        
-        // 音声テキスト（スクリプト）の表示切り替え
-        const scriptSection = document.getElementById('script-section');
-        if (q.read_text) {
-            document.getElementById('script-text').innerText = q.read_text;
-            scriptSection.style.display = 'block';
-        } else {
-            scriptSection.style.display = 'none';
-        }
-
         document.getElementById('explanation').innerText = q.explanation || "解説はありません。";
         document.getElementById('translation').innerText = q.translation || "和訳はありません。";
 
@@ -338,9 +261,7 @@
         localStorage.setItem('toeic_app_progress', JSON.stringify(progress));
     }
 
-    // 次へ
     function nextQuestion() {
-        stopAudio();
         currentIndex++;
         if (currentIndex < targetQuestions.length) {
             loadQuestion();
@@ -350,7 +271,6 @@
         }
     }
 
-    // 進捗リセット
     function resetProgress() {
         if (confirm("これまでの解答履歴をすべて消去しますか？\n（この操作は取り消せません）")) {
             progress = {};
@@ -360,7 +280,6 @@
         }
     }
 
-    // 起動時処理
     window.onload = loadSpreadsheetData;
 </script>
 </body>
